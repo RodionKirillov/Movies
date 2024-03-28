@@ -19,6 +19,16 @@ import java.util.List;
 public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewHolder> {
 
     private List<Movie> movies = new ArrayList<>();
+    private OnReachEndListener onReachEndListener;
+    private OnMovieClickListener onMovieClickListener;
+
+    public void setOnReachEndListener(OnReachEndListener onReachEndListener) {
+        this.onReachEndListener = onReachEndListener;
+    }
+
+    public void setOnMovieClickListener(OnMovieClickListener onMovieClickListener) {
+        this.onMovieClickListener = onMovieClickListener;
+    }
 
     public void setMovies(List<Movie> movies) {
         this.movies = movies;
@@ -41,34 +51,52 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
         Movie movie = movies.get(position);
 
 
-            Glide.with(holder.itemView)
-                    .load(movie.getPoster().getUrl())
-                    .error(R.drawable.ic_launcher_background)
-                    .placeholder(R.drawable.ic_launcher_background)
-                    .into(holder.imageViewPoster);
+        Glide.with(holder.itemView)
+                .load(movie.getPoster().getUrl())
+                .error(R.drawable.ic_launcher_background)
+                .placeholder(R.drawable.ic_launcher_background)
+                .into(holder.imageViewPoster);
 
 
+        double rating = movie.getRating().getKp();
+        int backgroundId;
+        if (rating > 7) {
+            backgroundId = R.drawable.circle_green;
+        } else if (rating > 5) {
+            backgroundId = R.drawable.circle_orange;
+        } else {
+            backgroundId = R.drawable.circle_red;
+        }
+        Drawable background = ContextCompat.getDrawable(holder.itemView.getContext(), backgroundId);
+        holder.textViewRating.setBackground(background);
+        holder.textViewRating.setText(String.format("%.1f", rating));
 
+        if ((position >= movies.size() - 10) && onReachEndListener != null) {
+            onReachEndListener.onReachEnd();
+        }
 
-            double rating = movie.getRating().getKp();
-            int backgroundId;
-            if (rating > 7) {
-                backgroundId = R.drawable.circle_green;
-            } else if (rating > 5) {
-                backgroundId = R.drawable.circle_orange;
-            } else {
-                backgroundId = R.drawable.circle_red;
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (onMovieClickListener != null) {
+                    onMovieClickListener.onMovieClick(movie);
+                }
             }
-            Drawable background = ContextCompat.getDrawable(holder.itemView.getContext(), backgroundId);
-            holder.textViewRating.setBackground(background);
-            holder.textViewRating.setText(String.format("%.1f", rating));
-
+        });
 
     }
 
     @Override
     public int getItemCount() {
         return movies.size();
+    }
+
+    interface OnReachEndListener {
+        void onReachEnd();
+    }
+
+    interface OnMovieClickListener {
+        void onMovieClick(Movie movie);
     }
 
     static class MovieViewHolder extends RecyclerView.ViewHolder {
